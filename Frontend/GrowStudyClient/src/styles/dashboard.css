@@ -1,0 +1,133 @@
+/* ===== General Container ===== */
+.dashboard-page {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 1rem 2rem;
+  background-color: #f9fafb;
+  min-height: 80vh;
+}
+
+/* ===== Page Title ===== */
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+/* ===== Card Styles ===== */
+.dashboard-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Card Header */
+.dashboard-card h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+/* Card Text */
+.dashboard-card p {
+  color: #4b5563;
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+}
+
+/* ===== Status Badge ===== */
+/* ===== Status Badge ===== */
+.status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  text-transform: capitalize;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); 
+  transition: all 0.2s ease;
+}
+
+.status-pending {
+  color: #3b82f6; /* Blue */
+}
+
+.status-reviewed {
+  color: #f59e0b; /* Amber */
+}
+
+.status-selected {
+  color: #10b981; /* Green */
+}
+
+.status-rejected {
+  color: #ef4444; /* Red */
+}
+
+/* ===== Buttons ===== */
+.btn-dashboard {
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-apply {
+  background-color: #10b981;
+  color: #fff;
+}
+
+.btn-apply:hover {
+  background-color: #059669;
+}
+
+.btn-action {
+  background-color: #3b82f6;
+  color: #fff;
+}
+
+.btn-action:hover {
+  background-color: #2563eb;
+}
+
+.btn-delete {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+.btn-delete:hover {
+  background-color: #dc2626;
+}
+
+/* ===== Flex Helpers ===== */
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-gap {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .flex-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

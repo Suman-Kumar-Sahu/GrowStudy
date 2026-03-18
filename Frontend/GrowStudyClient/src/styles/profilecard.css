@@ -1,0 +1,87 @@
+/* ==== PROFILE CARD ==== */
+.profile-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, #eef2ff, #ffffff);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+.profile-card-avatar {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #4f46e5;
+  box-shadow: 0 0 10px rgba(79, 70, 229, 0.2);
+}
+
+.profile-card-info {
+  flex: 1;
+  min-width: 250px;
+}
+
+.profile-card-info h2 {
+  font-size: 1.8rem;
+  color: #111827;
+  margin-bottom: 0.3rem;
+}
+
+.profile-card-info p {
+  color: #4b5563;
+  margin: 0.3rem 0;
+  font-size: 1rem;
+  
+}
+
+.profile-card-info p.role {
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+/* Education & Experience grids */
+.profile-sub-section h4 {
+  color: #4f46e5;
+  font-size: 1.2rem;
+  margin: 1rem 0 0.5rem;
+  font-weight: 600;
+}
+
+.profile-grid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.profile-grid-item {
+  flex: 1 1 calc(33% - 1rem);
+  background: #f3f4f6;
+  padding: 0.8rem 1rem;
+  border-radius: 0.6rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  min-width: 150px;
+}
+
+.profile-grid-item p {
+  margin: 0.2rem 0;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 700px) {
+  .profile-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .profile-grid-item {
+    flex: 1 1 100%;
+  }
+}

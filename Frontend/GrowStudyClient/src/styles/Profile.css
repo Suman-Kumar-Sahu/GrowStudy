@@ -1,0 +1,112 @@
+/* ==== GENERAL PAGE LAYOUT ==== */
+.profile-page {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  font-family: "Poppins", sans-serif;
+  background: #f9fafb;
+}
+
+/* Page Title */
+.profile-title {
+  text-align: center;
+  color: #4f46e5;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: capitalize;
+  margin-bottom: 1rem;
+}
+
+/* ==== CARD CONTAINERS ==== */
+/* Flex container to stack cards vertically */
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* For horizontal alignment of multiple cards if needed */
+.cards-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+/* Dynamic Input Grid */
+.dynamic-section {
+  margin-top: 1rem;
+}
+
+.dynamic-input {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Buttons */
+.add-btn,
+.remove-btn,
+.update-btn {
+  border: none;
+  border-radius: 0.6rem;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: "Poppins", sans-serif;
+  transition: all 0.3s ease;
+}
+
+.add-btn {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.add-btn:hover {
+  background-color: #4338ca;
+  transform: scale(1.03);
+}
+
+.remove-btn {
+  background-color: #dc2626;
+  color: white;
+}
+
+.remove-btn:hover {
+  background-color: #b91c1c;
+}
+
+.update-btn {
+  background-color: #10b981;
+  color: white;
+  align-self: flex-end;
+}
+
+.update-btn:hover {
+  background-color: #059669;
+  transform: scale(1.03);
+}
+
+/* ==== RESPONSIVE ==== */
+@media (max-width: 700px) {
+  .profile-page {
+    padding: 1rem;
+  }
+
+  .cards-row {
+    flex-direction: column;
+  }
+
+  .dynamic-input {
+    grid-template-columns: 1fr;
+  }
+
+  .update-btn {
+    width: 100%;
+  }
+}
