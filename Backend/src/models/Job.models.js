@@ -7,6 +7,11 @@ const jobSchema = new mongoose.Schema({
   skillsRequired: [String],
   location: String,
   stipend: String,
+  status: {
+    type: String,
+    enum: ["active", "closed"],
+    default: "active",          
+  },
   recruiterId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "User" , 
@@ -16,8 +21,8 @@ const jobSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   }],
-  responsibilities: String,   
-  requirements: String
+  responsibilities: [String], 
+  requirements: [String],
   
 },{ timestamps: true});
 

@@ -20,8 +20,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
-app.use("/api/notify",messageRoutes)
-// app.use("/api/ai", aiRoutes);
-
+app.use("/api/notify", messageRoutes);
+app.use("/api/ai", aiRoutes);
 
 export {app}

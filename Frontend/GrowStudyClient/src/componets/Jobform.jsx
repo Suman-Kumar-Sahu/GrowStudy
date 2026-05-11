@@ -1,129 +1,117 @@
 import React from "react";
+import { Spinner } from "./ui/Loader";
 
-export default function JobForm({ form, setForm, handleCreate }) {
+export default function JobForm({ form, setForm, handleCreate, loading }) {
+  const F = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
+
+  const inputStyle = { marginBottom: 0 };
+
   return (
-    <form
-      onSubmit={handleCreate}
-      className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-gray-100 flex flex-col gap-5 mt-8 transition-all duration-300 hover:shadow-xl">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        🧾 Create a New Job Post
-      </h2>
+    <form onSubmit={handleCreate}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
-      <div className="flex flex-col">
-        <label className="text-gray-700 font-medium mb-1">Job Title</label>
-        <input
-          type="text"
-          placeholder="e.g. Frontend Developer"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-          required
-        />
-      </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="cn-form-group" style={{ marginBottom: 0 }}>
+            <label className="cn-label">Job Title *</label>
+            <input
+              type="text"
+              className="cn-input"
+              placeholder="e.g. Frontend Developer"
+              value={form.title}
+              onChange={e => F("title", e.target.value)}
+              required
+            />
+          </div>
+          <div className="cn-form-group" style={{ marginBottom: 0 }}>
+            <label className="cn-label">Company *</label>
+            <input
+              type="text"
+              className="cn-input"
+              placeholder="e.g. OpenAI"
+              value={form.company}
+              onChange={e => F("company", e.target.value)}
+              required
+            />
+          </div>
+        </div>
 
-      <div className="flex flex-col">
-        <label className="text-gray-700 font-medium mb-1">Company</label>
-        <input
-          type="text"
-          placeholder="e.g. OpenAI"
-          value={form.company}
-          onChange={(e) => setForm({ ...form, company: e.target.value })}
-          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-          required
-        />
-      </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="cn-form-group" style={{ marginBottom: 0 }}>
+            <label className="cn-label">Location</label>
+            <input
+              type="text"
+              className="cn-input"
+              placeholder="Remote / Bangalore"
+              value={form.location}
+              onChange={e => F("location", e.target.value)}
+            />
+          </div>
+          <div className="cn-form-group" style={{ marginBottom: 0 }}>
+            <label className="cn-label">Stipend / Salary</label>
+            <input
+              type="text"
+              className="cn-input"
+              placeholder="₹15,000/month"
+              value={form.stipend}
+              onChange={e => F("stipend", e.target.value)}
+            />
+          </div>
+        </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex flex-col flex-1">
-          <label className="text-gray-700 font-medium mb-1">Location</label>
+        <div>
+          <label className="cn-label">Required Skills <span style={{ color: "var(--text-3)", fontWeight: 400 }}>(comma separated)</span></label>
           <input
             type="text"
-            placeholder="e.g. Remote / Bangalore"
-            value={form.location}
-            onChange={(e) => setForm({ ...form, location: e.target.value })}
-            className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            className="cn-input"
+            placeholder="React, Node.js, MongoDB"
+            value={form.skillsRequired}
+            onChange={e => F("skillsRequired", e.target.value)}
           />
         </div>
 
-        <div className="flex flex-col flex-1">
-          <label className="text-gray-700 font-medium mb-1">Stipend</label>
-          <input
-            type="text"
-            placeholder="e.g. ₹15,000/month"
-            value={form.stipend}
-            onChange={(e) => setForm({ ...form, stipend: e.target.value })}
-            className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        <div>
+          <label className="cn-label">Job Description</label>
+          <textarea
+            className="cn-input cn-textarea"
+            placeholder="Describe the role, responsibilities, and company culture…"
+            value={form.description}
+            onChange={e => F("description", e.target.value)}
+            rows={4}
           />
         </div>
-      </div>
 
-      <div className="flex flex-col">
-        <label className="text-gray-700 font-medium mb-1">
-          Required Skills (comma separated)
-        </label>
-        <input
-          type="text"
-          placeholder="e.g. React, Node.js, MongoDB"
-          value={form.skillsRequired}
-          onChange={(e) =>
-            setForm({ ...form, skillsRequired: e.target.value })
-          }
-          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-        />
-      </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div>
+            <label className="cn-label">Responsibilities <span style={{ color: "var(--text-3)", fontWeight: 400 }}>(one per line)</span></label>
+            <textarea
+              className="cn-input cn-textarea"
+              placeholder={"- Build scalable features\n- Code reviews\n- Deploy to production"}
+              value={form.responsibilities}
+              onChange={e => F("responsibilities", e.target.value)}
+              rows={5}
+            />
+          </div>
+          <div>
+            <label className="cn-label">Requirements <span style={{ color: "var(--text-3)", fontWeight: 400 }}>(one per line)</span></label>
+            <textarea
+              className="cn-input cn-textarea"
+              placeholder={"- 2+ years React experience\n- Strong JS skills\n- REST API knowledge"}
+              value={form.requirements}
+              onChange={e => F("requirements", e.target.value)}
+              rows={5}
+            />
+          </div>
+        </div>
 
-      <div className="flex flex-col">
-        <label className="text-gray-700 font-medium mb-1">Job Description</label>
-        <textarea
-          placeholder="Describe the role, responsibilities, and requirements..."
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none min-h-[120px]"
-        ></textarea>
+        <button
+          type="submit"
+          disabled={loading}
+          className="cn-btn cn-btn-primary cn-btn-block"
+          style={{ padding: 13, fontSize: 15 }}
+        >
+          {loading ? <><Spinner size="sm" /> Posting…</> : "📤 Post Job"}
+        </button>
       </div>
-
-      <div className="flex flex-col">
-        <label className="text-gray-700 font-medium mb-1">
-          Responsibilities (one per line)
-        </label>
-        <textarea
-          placeholder="e.g. 
-          - Develop and maintain frontend features
-          - Collaborate with design team
-          - Write clean, maintainable code"
-          value={form.responsibilities}
-          onChange={(e) => setForm({ ...form, responsibilities: e.target.value })}
-          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none min-h-[120px]"
-        ></textarea>
-        <span className="text-xs text-gray-500 mt-1">
-          Enter each responsibility on a new line
-        </span>
-      </div>
-
-      <div className="flex flex-col">
-        <label className="text-gray-700 font-medium mb-1">
-          Requirements (one per line)
-        </label>
-        <textarea
-          placeholder="e.g. 
-          - 2+ years of experience with React
-          - Strong understanding of JavaScript
-          - Experience with REST APIs"
-          value={form.requirements}
-          onChange={(e) => setForm({ ...form, requirements: e.target.value })}
-          className="border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none min-h-[120px]"
-        ></textarea>
-        <span className="text-xs text-gray-500 mt-1">
-          Enter each requirement on a new line
-        </span>
-      </div>
-
-      <button
-        type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl mt-2 transition-all duration-200 transform hover:-translate-y-[2px] shadow-sm hover:shadow-md"
-      >
-        Post Job
-      </button>
     </form>
   );
 }

@@ -1,97 +1,150 @@
-import React from "react";
-import { Edit2 } from "lucide-react";
+import React, { memo } from "react";
 
-export default function ProfileCard({avatar,name,about,role,skills = [],education = [],experience = [],onEdit}) {
+const SKILL_COLORS = ["cyan", "green", "amber", "purple", "red"];
+
+export default memo(function ProfileCard({
+  avatar, name, about, role, skills = [],
+  education = [], experience = [], onEdit, publicView = false
+}) {
+  const initials = (name || "U").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+
   return (
-    <div className="bg-white shadow-md rounded-2xl p-6 flex flex-col items-center text-center transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl relative">
-      {onEdit && (
-        <button
-          onClick={onEdit}
-          className="absolute top-4 right-4 p-2 text-gray-600 hover:bg-gray-100 rounded-full transition"
-          title="Edit Profile"
-        >
-          <Edit2 size={20} />
-        </button>
-      )}
-      
-      {avatar ? (
-        <img
-          src={avatar}
-          alt="Avatar"
-          className="w-28 h-28 rounded-full object-cover border-4 border-blue-500 mb-4"
-        />
-      ) : (
-        <div className="w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center mb-4">
-          👤
+    <div style={{
+      background: "var(--bg-surface)",
+      border: "1px solid var(--border)",
+      borderRadius: "var(--r-xl)",
+      padding: 32,
+      animation: "cn-slide-up 0.3s ease"
+    }}>
+      {/* Top row: avatar + meta + edit */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 24, marginBottom: 24 }}>
+        {/* Avatar */}
+        <div style={{
+          width: 88, height: 88, borderRadius: "50%", flexShrink: 0,
+          overflow: "hidden",
+          border: "3px solid var(--border-glow)",
+          boxShadow: "var(--glow-cyan)"
+        }}>
+          {avatar
+            ? <img src={avatar} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <div style={{
+                width: "100%", height: "100%",
+                background: "linear-gradient(135deg, var(--cyan), #6366f1)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 800, fontSize: 28, color: "var(--bg-base)",
+                fontFamily: "var(--font-serif)"
+              }}>{initials}</div>
+          }
         </div>
-      )}
 
-      <h2 className="text-xl font-semibold text-gray-800 capitalize">
-        {name || "Student Name"}
-      </h2>
-      <p className="text-blue-600 font-medium capitalize">
-        {role || "Student"}
-      </p>
-
-      <p className="text-gray-600 text-sm mt-3 normal-case max-w-md">
-        {about || "Tell us something about yourself..."}
-      </p>
-
-      {skills.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mt-4">
-          {skills.map((skill, idx) => (
-            <span
-              key={idx}
-              className={`px-3 py-1 rounded-full text-white text-sm font-medium shadow-sm transition-transform duration-200 hover:scale-105
-                ${
-                  [
-                    "bg-blue-500",
-                    "bg-green-500",
-                    "bg-purple-500",
-                    "bg-pink-500",
-                    "bg-orange-500",
-                    "bg-teal-500",
-                    "bg-indigo-500",
-                    "bg-red-500",
-                  ][idx % 8]
-                }
-              `}
-            >
-              {skill}
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)", marginBottom: 4 }}>
+            {name || "Your Name"}
+          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "3px 10px", borderRadius: 6,
+              background: "var(--cyan-muted)", border: "1px solid rgba(34,211,238,0.2)",
+              fontSize: 12, fontWeight: 700, color: "var(--cyan)", textTransform: "capitalize"
+            }}>
+              {role || "Student"}
             </span>
-          ))}
+          </div>
+          {about && (
+            <p style={{ fontSize: 14, color: "var(--text-2)", marginTop: 10, lineHeight: 1.65, maxWidth: 520 }}>
+              {about}
+            </p>
+          )}
+        </div>
+
+        {/* Edit button */}
+        {onEdit && !publicView && (
+          <button
+            id="profile-edit-btn"
+            onClick={onEdit}
+            className="cn-btn cn-btn-ghost cn-btn-sm"
+            aria-label="Edit profile"
+          >
+            ✏️ Edit Profile
+          </button>
+        )}
+      </div>
+
+      {/* Skills */}
+      {skills.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+            letterSpacing: "1.5px", color: "var(--text-3)", marginBottom: 12
+          }}>Skills</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {skills.map((skill, idx) => (
+              <span
+                key={idx}
+                className={`cn-tag cn-tag-${SKILL_COLORS[idx % SKILL_COLORS.length]}`}
+                style={{ fontSize: 13, padding: "5px 12px" }}
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
-      {education.length > 0 && (
-        <div className="w-full text-left mt-5">
-          <h4 className="font-semibold text-gray-800 mb-2 border-b border-gray-200 pb-1">
-            🎓 Education
-          </h4>
-          <ul className="list-disc list-inside text-gray-700 space-y-1">
-            {education.map((edu, idx) => (
-              <li key={idx} className="text-sm">
-                <span className="font-medium">{edu.college}</span> — {edu.degree} ({edu.year})
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Education and Experience side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: education.length > 0 && experience.length > 0 ? "1fr 1fr" : "1fr", gap: 24 }}
+        className="profile-card-grid">
 
-      {experience.length > 0 && (
-        <div className="w-full text-left mt-5">
-          <h4 className="font-semibold text-gray-800 mb-2 border-b border-gray-200 pb-1">
-            💼 Experience
-          </h4>
-          <ul className="list-disc list-inside text-gray-700 space-y-1">
-            {experience.map((exp, idx) => (
-              <li key={idx} className="text-sm">
-                <span className="font-medium">{exp.company}</span> — {exp.role} ({exp.duration})
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        {education.length > 0 && (
+          <div>
+            <div style={{
+              fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+              letterSpacing: "1.5px", color: "var(--text-3)", marginBottom: 12
+            }}>🎓 Education</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {education.map((edu, idx) => (
+                <div key={idx} style={{
+                  padding: "12px 16px", borderRadius: "var(--r)",
+                  background: "var(--bg-raised)", border: "1px solid var(--border)"
+                }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>{edu.college}</div>
+                  <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 2 }}>
+                    {edu.degree} · <span style={{ color: "var(--text-3)" }}>{edu.year}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {experience.length > 0 && (
+          <div>
+            <div style={{
+              fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+              letterSpacing: "1.5px", color: "var(--text-3)", marginBottom: 12
+            }}>💼 Experience</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {experience.map((exp, idx) => (
+                <div key={idx} style={{
+                  padding: "12px 16px", borderRadius: "var(--r)",
+                  background: "var(--bg-raised)", border: "1px solid var(--border)"
+                }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>{exp.company}</div>
+                  <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 2 }}>
+                    {exp.role} · <span style={{ color: "var(--text-3)" }}>{exp.duration}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @media (max-width: 600px) { .profile-card-grid { grid-template-columns: 1fr !important; } }
+      `}</style>
     </div>
   );
-}
+});

@@ -3,238 +3,205 @@ import api from "../api/Axios";
 import JobCard from "../componets/JobCard.jsx";
 import JobForm from "../componets/Jobform.jsx";
 import { AuthContext } from "../context/AuthContext.jsx";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useToast } from "../context/ToastContext.jsx";
+import { Spinner, SkeletonJobCard } from "../componets/ui/Loader.jsx";
+import EmptyState from "../componets/ui/EmptyState.jsx";
+import Modal from "../componets/ui/Modal.jsx";
+import Sidebar from "../componets/Sidebar.jsx";
+
+const EMPTY_FORM = {
+  title: "", company: "", description: "", skillsRequired: "",
+  location: "", stipend: "", responsibilities: "", requirements: ""
+};
 
 export default function RecruiterDashboard() {
   const { user } = useContext(AuthContext);
-  const [myJobs, setMyJobs] = useState([]);
-  const [allJobs, setAllJobs] = useState([]);
-  const [activeTab, setActiveTab] = useState("myJobs");
-  const [showJobForm, setShowJobForm] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    company: "",
-    description: "",
-    skillsRequired: "",
-    location: "",
-    stipend: "",
-    responsibilities: "",
-    requirements: ""
-  });
+  const toast    = useToast();
+  const [myJobs,       setMyJobs]      = useState([]);
+  const [allJobs,      setAllJobs]     = useState([]);
+  const [activeTab,    setActiveTab]   = useState("myJobs");
+  const [showModal,    setShowModal]   = useState(false);
+  const [form,         setForm]        = useState(EMPTY_FORM);
+  const [loading,      setLoading]     = useState(true);
+  const [creating,     setCreating]    = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // jobId to confirm delete
 
   useEffect(() => {
-    const fetchMyJobs = async () => {
+    const fetchAll = async () => {
       try {
-        const res = await api.get("/jobs/recruiter", { withCredentials: true });
-        setMyJobs(res.data);
-      } catch (err) {
-        console.error(err);
+        const [myRes, allRes] = await Promise.all([
+          api.get("/jobs/recruiter", { withCredentials: true }),
+          api.get("/jobs",           { withCredentials: true })
+        ]);
+        setMyJobs(myRes.data);
+        setAllJobs(allRes.data);
+      } catch {
+        toast.error("Could not load jobs", "Please refresh.");
+      } finally {
+        setLoading(false);
       }
     };
-
-    const fetchAllJobs = async () => {
-      try {
-        const res = await api.get("/jobs", { withCredentials: true });
-        setAllJobs(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchMyJobs();
-    fetchAllJobs();
+    fetchAll();
   }, []);
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    const skillsArray = form.skillsRequired.split(",").map(s => s.trim());
-    
-    // Process responsibilities and requirements
-    const responsibilitiesArray = form.responsibilities
-      .split("\n")
-      .map(r => r.trim())
-      .filter(r => r.length > 0)
-      .map(r => r.replace(/^-\s*/, ""));
-    
-    const requirementsArray = form.requirements.split("\n").map(r => r.trim()).filter(r => r.length > 0).map(r => r.replace(/^-\s*/, ""));
-    
+    setCreating(true);
     try {
-      const res = await api.post(
-        "/jobs",{
-          ...form,
-          skillsRequired: skillsArray,
-          responsibilities: responsibilitiesArray,
-          requirements: requirementsArray
-        },
-        { withCredentials: true }
-      );
-      toast.success("Job Created successfully ✅");
-      setMyJobs([...myJobs, res.data]);
-      setAllJobs([...allJobs, res.data]);
-      setForm({
-        title: "",
-        company: "",
-        description: "",
-        skillsRequired: "",
-        location: "",
-        stipend: "",
-        responsibilities: "",
-        requirements: ""
-      });
-      setShowJobForm(false);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to create job ❌");
+      const skillsArray = form.skillsRequired.split(",").map(s => s.trim()).filter(Boolean);
+      const split = (text) => text.split("\n").map(r => r.trim().replace(/^-\s*/, "")).filter(Boolean);
+      const res = await api.post("/jobs", {
+        ...form,
+        skillsRequired:   skillsArray,
+        responsibilities: split(form.responsibilities),
+        requirements:     split(form.requirements),
+      }, { withCredentials: true });
+
+      toast.success("Job posted! 🎉", `"${res.data.title}" is now live.`);
+      setMyJobs(prev => [res.data, ...prev]);
+      setAllJobs(prev => [res.data, ...prev]);
+      setForm(EMPTY_FORM);
+      setShowModal(false);
+    } catch {
+      toast.error("Failed to post", "Please check the form and try again.");
+    } finally {
+      setCreating(false);
     }
   };
 
   const handleDelete = async (jobId) => {
-    if (!window.confirm("Are you sure you want to delete this job?")) {
-      return;
-    }
-
     try {
       await api.delete(`/jobs/${jobId}`, { withCredentials: true });
-      toast.success("Job deleted successfully ✅");
-      setMyJobs(myJobs.filter(j => j._id !== jobId));
-      setAllJobs(allJobs.filter(j => j._id !== jobId));
+      toast.success("Job deleted", "The posting has been removed.");
+      setMyJobs(prev  => prev.filter(j => j._id !== jobId));
+      setAllJobs(prev => prev.filter(j => j._id !== jobId));
+      setDeleteConfirm(null);
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to delete job ❌");
+      toast.error("Delete failed", err.response?.data?.message || "Try again.");
     }
   };
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
   return (
-    <div className="recruiter-dashboard max-w-6xl mx-auto mt-10 p-6">
-      <ToastContainer position="top-right" autoClose={2000} theme="colored" />
+    <div className="cn-layout-with-sidebar">
+      <Sidebar />
 
-      {/* Header with Create Job Button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h2 className="text-3xl font-bold text-blue-900">Recruiter Dashboard</h2>
-        <button
-          onClick={() => setShowJobForm(!showJobForm)}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1 flex items-center gap-2 whitespace-nowrap"
-        >
-          <span className="text-xl">{showJobForm ? "✕" : "+"}</span>
-          {showJobForm ? "Cancel" : "Create New Job"}
-        </button>
-      </div>
-
-      {/* Show ONLY Job Form when creating */}
-      {showJobForm ? (
-        <div className="transition-all duration-300 ease-in-out">
-          <JobForm form={form} setForm={setForm} handleCreate={handleCreate} />
-        </div>
-      ) : (
-        <>
-          {/* Tabs Navigation */}
-          <div className="flex gap-4 mb-6 border-b-2 border-gray-200">
-            <button
-              onClick={() => setActiveTab("myJobs")}
-              className={`pb-3 px-6 font-semibold text-lg transition-all duration-200 relative ${
-                activeTab === "myJobs"
-                  ? "text-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              My Jobs
-              <span className="ml-2 bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-bold">
-                {myJobs.length}
-              </span>
-              {activeTab === "myJobs" && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("allJobs")}
-              className={`pb-3 px-6 font-semibold text-lg transition-all duration-200 relative ${
-                activeTab === "allJobs"
-                  ? "text-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              All Jobs
-              <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-bold">
-                {allJobs.length}
-              </span>
-              {activeTab === "allJobs" && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
-              )}
-            </button>
+      <main className="cn-main-content">
+        {/* Page header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <span className="cn-section-label">Recruiter Hub</span>
+            <h1 style={{ marginTop: 4, fontSize: "clamp(1.5rem,3vw,2.2rem)", fontWeight: 800, color: "var(--text-1)" }}>
+              {greeting}, <em style={{ fontFamily: "var(--font-serif)", fontStyle: "italic" }}>{user?.name?.split(" ")[0] || "there"}</em> 👋
+            </h1>
           </div>
+          <button id="post-job-btn" onClick={() => setShowModal(true)} className="cn-btn cn-btn-primary">
+            + Post a Job
+          </button>
+        </div>
 
-          {/* My Jobs Tab Content */}
-          {activeTab === "myJobs" && (
-            <div className="transition-all duration-300">
-              {myJobs.length === 0 ? (
-                <div className="text-center py-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-dashed border-blue-300">
-                  <div className="text-7xl mb-4">📋</div>
-                  <h3 className="text-2xl font-semibold text-gray-800 mb-2">
-                    No Jobs Posted Yet
-                  </h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Start by creating your first job posting to attract talented candidates
-                  </p>
+        {/* Stats row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 28 }} className="stats-grid-3">
+          {[
+            { icon: "📋", num: myJobs.length,  label: "Jobs posted",   color: "var(--cyan)" },
+            { icon: "👥", num: allJobs.length, label: "Total in system",color: "var(--amber)" },
+            { icon: "📊", num: myJobs.reduce((a, j) => a + (j.applicants?.length || 0), 0), label: "Total applicants", color: "var(--green)" },
+          ].map(({ icon, num, label, color }) => (
+            <div key={label} style={{
+              background: "var(--bg-surface)", border: "1px solid var(--border)",
+              borderRadius: "var(--r-lg)", padding: "20px 22px"
+            }}>
+              <div style={{ fontSize: 24, marginBottom: 8 }}>{icon}</div>
+              <div style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "2rem", color, lineHeight: 1 }}>{num}</div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div className="cn-tabs">
+          <button id="tab-my-jobs" className={`cn-tab${activeTab === "myJobs" ? " active" : ""}`} onClick={() => setActiveTab("myJobs")}>
+            My Jobs <span className="cn-tab-badge">{myJobs.length}</span>
+          </button>
+          <button id="tab-all-jobs" className={`cn-tab${activeTab === "allJobs" ? " active" : ""}`} onClick={() => setActiveTab("allJobs")}>
+            All Jobs <span className="cn-tab-badge">{allJobs.length}</span>
+          </button>
+        </div>
+
+        {/* Job grids */}
+        {loading ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonJobCard key={i} />)}
+          </div>
+        ) : activeTab === "myJobs" ? (
+          myJobs.length === 0 ? (
+            <EmptyState
+              icon="📋"
+              title="No jobs posted yet"
+              description="Post your first job to start receiving applications from top students."
+              action={<button onClick={() => setShowModal(true)} className="cn-btn cn-btn-primary">Post Your First Job</button>}
+            />
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+              {myJobs.map(job => (
+                <div key={job._id} style={{ position: "relative" }}>
+                  <JobCard job={job} currentUserId={user?._id} currentUserRole={user?.role} />
                   <button
-                    onClick={() => setShowJobForm(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-                  >
-                    Create Your First Job
-                  </button>
+                    onClick={() => setDeleteConfirm(job._id)}
+                    className="cn-btn cn-btn-danger cn-btn-sm"
+                    style={{ position: "absolute", top: 12, right: 12 }}
+                    aria-label="Delete job"
+                  >🗑</button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {myJobs.map((job) => (
-                    <div key={job._id} className="relative group">
-                      <JobCard
-                        job={job}
-                        currentUserId={user?._id}
-                        currentUserRole={user?.role}
-                      />
-                      <button
-                        onClick={() => handleDelete(job._id)}
-                        className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center gap-2 opacity-0 group-hover:opacity-100"
-                      >
-                        <span>🗑️</span>
-                        Delete
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-          )}
+          )
+        ) : (
+          allJobs.length === 0 ? (
+            <EmptyState icon="🔍" title="No jobs available" description="No jobs have been posted yet." />
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+              {allJobs.map(job => (
+                <JobCard key={job._id} job={job} currentUserId={user?._id} currentUserRole={user?.role} />
+              ))}
+            </div>
+          )
+        )}
+      </main>
 
-          {/* All Jobs Tab Content */}
-          {activeTab === "allJobs" && (
-            <div className="transition-all duration-300">
-              {allJobs.length === 0 ? (
-                <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl border-2 border-dashed border-gray-300">
-                  <div className="text-7xl mb-4">🔍</div>
-                  <h3 className="text-2xl font-semibold text-gray-800 mb-2">
-                    No Jobs Available
-                  </h3>
-                  <p className="text-gray-600 max-w-md mx-auto">
-                    There are currently no job postings in the system
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {allJobs.map((job) => (
-                    <JobCard
-                      key={job._id}
-                      job={job}
-                      currentUserId={user?._id}
-                      currentUserRole={user?.role}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
+      {/* Create Job Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => { setShowModal(false); setForm(EMPTY_FORM); }}
+        title="Post a New Job"
+        maxWidth={760}
+      >
+        <JobForm form={form} setForm={setForm} handleCreate={handleCreate} loading={creating} />
+      </Modal>
+
+      {/* Delete confirm modal */}
+      <Modal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        title="Delete Job Posting"
+        footer={
+          <>
+            <button className="cn-btn cn-btn-ghost" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+            <button className="cn-btn cn-btn-danger" onClick={() => handleDelete(deleteConfirm)}>Delete</button>
+          </>
+        }
+      >
+        <p style={{ fontSize: 15, color: "var(--text-2)" }}>
+          Are you sure you want to delete this job? This action cannot be undone and will remove all applications associated with it.
+        </p>
+      </Modal>
+
+      <style>{`
+        @media (max-width: 700px) { .stats-grid-3 { grid-template-columns: 1fr 1fr !important; } }
+        @media (max-width: 480px) { .stats-grid-3 { grid-template-columns: 1fr !important; } }
+      `}</style>
     </div>
   );
 }

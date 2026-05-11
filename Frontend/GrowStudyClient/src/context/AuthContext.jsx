@@ -7,13 +7,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 AUTO LOGIN (SESSION RESTORE)
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const res = await api.get("auth/user/me", {
-          withCredentials: true,
-        });
+        const res = await api.get("/auth/user/me");
         setUser(res.data);
       } catch {
         setUser(null);

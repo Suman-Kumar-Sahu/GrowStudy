@@ -1,273 +1,205 @@
 import React, { useState } from "react";
 import api from "../api/Axios";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useToast } from "../context/ToastContext";
+import { Spinner } from "./ui/Loader";
 
-export default function SkillsCard({ form, setForm, handleUpdate, setUser }) {
-  const [avatarFile, setAvatarFile] = useState(null);
+export default function SkillsCard({ form, setForm, handleUpdate, loading, setUser }) {
+  const toast = useToast();
+  const [avatarFile,    setAvatarFile]    = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
-  const  handleAvatarChange = (e) => {
+  /* ─── Avatar ─── */
+  const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setAvatarFile(file);
-      setAvatarPreview(URL.createObjectURL(file));
-    }
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
   const handleAvatarUpload = async () => {
-  if (!avatarFile) {
-    toast.warning("Please select an image first");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.append("avatar", avatarFile);
-
-    const res = await api.post("/users/upload-avatar", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    toast.success("Avatar uploaded successfully!");
-
-    const newAvatar = (res.data.avatar || res.data.avatarUrl) + `?t=${Date.now()}`;
-
-    // ✅ Instantly update avatar in UI
-    if (typeof setUser === "function") {
-      setUser((prev) => ({
-        ...prev,
-        avatar:newAvatar
-      }));
+    if (!avatarFile) { toast.warn("No file selected", "Please select an image first"); return; }
+    setAvatarLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("avatar", avatarFile);
+      const res = await api.post("/users/upload-avatar", fd, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      const newAvatar = (res.data.avatar || res.data.avatarUrl) + `?t=${Date.now()}`;
+      if (typeof setUser === "function") setUser(prev => ({ ...prev, avatar: newAvatar }));
+      setForm(prev => ({ ...prev, avatar: newAvatar }));
+      toast.success("Avatar updated!", "Your profile picture has been changed.");
+    } catch {
+      toast.error("Upload failed", "Please try again.");
+    } finally {
+      setAvatarLoading(false);
     }
-
-    // ✅ Update form too (if needed)
-    setForm((prev) => ({
-      ...prev,
-      avatar: res.data.avatar || res.data.avatarUrl || prev.avatar,
-    }));
-
-  } catch (error) {
-    console.error("Avatar upload failed:", error);
-    toast.error("Avatar upload failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
   };
 
+  /* ─── Education ─── */
+  const addEdu    = () => setForm(f => ({ ...f, education: [...f.education, { college: "", degree: "", year: "" }] }));
+  const removeEdu = (i) => setForm(f => ({ ...f, education: f.education.filter((_, idx) => idx !== i) }));
+  const updateEdu = (i, field, val) => setForm(f => {
+    const ed = [...f.education]; ed[i] = { ...ed[i], [field]: val }; return { ...f, education: ed };
+  });
 
-  // 🎓 Education handlers
-  const addEducation = () =>
-    setForm({
-      ...form,
-      education: [...(form.education || []), { college: "", degree: "", year: "" }],
-    });
+  /* ─── Experience ─── */
+  const addExp    = () => setForm(f => ({ ...f, experience: [...f.experience, { company: "", role: "", duration: "" }] }));
+  const removeExp = (i) => setForm(f => ({ ...f, experience: f.experience.filter((_, idx) => idx !== i) }));
+  const updateExp = (i, field, val) => setForm(f => {
+    const ex = [...f.experience]; ex[i] = { ...ex[i], [field]: val }; return { ...f, experience: ex };
+  });
 
-  const removeEducation = (index) => {
-    const updated = [...(form.education || [])];
-    updated.splice(index, 1);
-    setForm({ ...form, education: updated });
-  };
-
-  const updateEducationField = (index, field, value) => {
-    const updated = [...(form.education || [])];
-    updated[index][field] = value;
-    setForm({ ...form, education: updated });
-  };
-
-  // 💼 Experience handlers
-  const addExperience = () =>
-    setForm({
-      ...form,
-      experience: [...(form.experience || []), { company: "", role: "", duration: "" }],
-    });
-
-  const removeExperience = (index) => {
-    const updated = [...(form.experience || [])];
-    updated.splice(index, 1);
-    setForm({ ...form, experience: updated });
-  };
-
-  const updateExperienceField = (index, field, value) => {
-    const updated = [...(form.experience || [])];
-    updated[index][field] = value;
-    setForm({ ...form, experience: updated });
-  };
+  const sectionTitle = (label) => (
+    <div style={{
+      fontSize: 12, fontWeight: 700, textTransform: "uppercase",
+      letterSpacing: "1.5px", color: "var(--text-3)", marginBottom: 14
+    }}>{label}</div>
+  );
 
   return (
-    <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-100 mt-6 sm:mt-8">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">🧠 Skills & Profile</h2>
+    <div style={{
+      background: "var(--bg-surface)",
+      border: "1px solid var(--border)",
+      borderRadius: "var(--r-xl)",
+      padding: 28, marginTop: 24
+    }}>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-1)", marginBottom: 24 }}>Edit Profile</h2>
 
-      <form onSubmit={handleUpdate} className="space-y-6">
-        {/* Avatar Section */}
-        <div>
-          <label className="block font-medium mb-2">Profile Avatar</label>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {avatarPreview ? (
-              <img
-                src={avatarPreview}
-                alt="Avatar preview"
-                className="w-16 h-16 rounded-full object-cover border"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
-                👤
+      <form onSubmit={handleUpdate}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+          {/* Avatar */}
+          <div>
+            {sectionTitle("Profile Picture")}
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
+                border: "2px solid var(--border-glow)", boxShadow: "var(--glow-cyan)"
+              }}>
+                {avatarPreview || form.avatar
+                  ? <img src={avatarPreview || form.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, var(--cyan), #6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 22, color: "var(--bg-base)" }}>
+                      {(form.name?.[0] || "U").toUpperCase()}
+                    </div>
+                }
               </div>
-            )}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="block text-sm text-gray-600"
-              />
-              <button
-                onClick={handleAvatarUpload}
-                disabled={loading}
-                className="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold shadow-md hover:scale-[1.02] transition-all disabled:opacity-70 flex items-center justify-center gap-2"
-              >
-                {loading   ? "Uploading..." : "Upload Avatar"}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <label style={{
+                  padding: "7px 14px", borderRadius: "var(--r-sm)", border: "1px solid var(--border)",
+                  background: "var(--bg-raised)", color: "var(--text-2)", fontSize: 13, fontWeight: 600,
+                  cursor: "pointer", transition: "all 0.2s"
+                }}>
+                  Choose Image
+                  <input type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
+                </label>
+                <button type="button" onClick={handleAvatarUpload} disabled={!avatarFile || avatarLoading}
+                  className="cn-btn cn-btn-primary cn-btn-sm">
+                  {avatarLoading ? <><Spinner size="sm" /> Uploading…</> : "Upload"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Name */}
+          <div>
+            <label className="cn-label">Full Name</label>
+            <input type="text" className="cn-input"
+              value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+          </div>
+
+          {/* About */}
+          <div>
+            <label className="cn-label">About / Bio</label>
+            <textarea className="cn-input cn-textarea" rows={3}
+              placeholder="Tell recruiters about yourself…"
+              value={form.about} onChange={e => setForm(f => ({ ...f, about: e.target.value }))} />
+          </div>
+
+          {/* Skills */}
+          <div>
+            <label className="cn-label">Skills <span style={{ color: "var(--text-3)", fontWeight: 400 }}>(comma separated)</span></label>
+            <input type="text" className="cn-input"
+              placeholder="React, Node.js, Python, Figma"
+              value={form.skills} onChange={e => setForm(f => ({ ...f, skills: e.target.value }))} />
+          </div>
+
+          {/* Education */}
+          <div>
+            {sectionTitle("🎓 Education")}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {(form.education || []).map((edu, idx) => (
+                <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 120px auto", gap: 10, alignItems: "end" }}>
+                  <div>
+                    {idx === 0 && <label className="cn-label">College</label>}
+                    <input type="text" className="cn-input" placeholder="University" value={edu.college}
+                      onChange={e => updateEdu(idx, "college", e.target.value)} />
+                  </div>
+                  <div>
+                    {idx === 0 && <label className="cn-label">Degree</label>}
+                    <input type="text" className="cn-input" placeholder="B.Tech CSE" value={edu.degree}
+                      onChange={e => updateEdu(idx, "degree", e.target.value)} />
+                  </div>
+                  <div>
+                    {idx === 0 && <label className="cn-label">Year</label>}
+                    <input type="text" className="cn-input" placeholder="2024" value={edu.year}
+                      onChange={e => updateEdu(idx, "year", e.target.value)} />
+                  </div>
+                  <button type="button" onClick={() => removeEdu(idx)}
+                    style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 16, padding: "10px 4px", marginTop: idx === 0 ? 22 : 0 }}>
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button type="button" onClick={addEdu}
+                style={{ background: "none", border: "none", color: "var(--cyan)", cursor: "pointer", fontSize: 13, fontWeight: 600, textAlign: "left", padding: 0, fontFamily: "var(--font-ui)" }}>
+                + Add Education
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Name */}
-        <div>
-          <label className="block font-medium mb-1">Full Name</label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-            className="w-full border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-          />
-        </div>
-
-        {/* About */}
-        <div>
-          <label className="block font-medium mb-1">About</label>
-          <textarea
-            rows="3"
-            value={form.about}
-            onChange={(e) => setForm({ ...form, about: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-          />
-        </div>
-
-        {/* Skills */}
-        <div>
-          <label className="block font-medium mb-1">Skills (comma separated)</label>
-          <input
-            type="text"
-            value={form.skills}
-            onChange={(e) => setForm({ ...form, skills: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-          />
-        </div>
-
-        {/* Education Section */}
-        <div>
-          <h3 className="font-semibold mb-3 text-lg">🎓 Education</h3>
-          {(form.education || []).map((edu, idx) => (
-            <div key={idx} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3 relative">
-              <input
-                type="text"
-                placeholder="College"
-                value={edu.college}
-                onChange={(e) => updateEducationField(idx, "college", e.target.value)}
-                className="border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-              />
-              <input
-                type="text"
-                placeholder="Degree"
-                value={edu.degree}
-                onChange={(e) => updateEducationField(idx, "degree", e.target.value)}
-                className="border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-              />
-              <input
-                type="text"
-                placeholder="Year"
-                value={edu.year}
-                onChange={(e) => updateEducationField(idx, "year", e.target.value)}
-                className="border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-              />
-              {idx > 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeEducation(idx)}
-                  className="absolute -right-4 sm:-right-6 top-2 text-red-500 hover:text-red-700"
-                >
-                  ❌
-                </button>
-              )}
+          {/* Experience */}
+          <div>
+            {sectionTitle("💼 Experience")}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {(form.experience || []).map((exp, idx) => (
+                <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 140px auto", gap: 10, alignItems: "end" }}>
+                  <div>
+                    {idx === 0 && <label className="cn-label">Company</label>}
+                    <input type="text" className="cn-input" placeholder="Company" value={exp.company}
+                      onChange={e => updateExp(idx, "company", e.target.value)} />
+                  </div>
+                  <div>
+                    {idx === 0 && <label className="cn-label">Role</label>}
+                    <input type="text" className="cn-input" placeholder="Software Intern" value={exp.role}
+                      onChange={e => updateExp(idx, "role", e.target.value)} />
+                  </div>
+                  <div>
+                    {idx === 0 && <label className="cn-label">Duration</label>}
+                    <input type="text" className="cn-input" placeholder="Jan–Jun 2024" value={exp.duration}
+                      onChange={e => updateExp(idx, "duration", e.target.value)} />
+                  </div>
+                  <button type="button" onClick={() => removeExp(idx)}
+                    style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 16, padding: "10px 4px", marginTop: idx === 0 ? 22 : 0 }}>
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button type="button" onClick={addExp}
+                style={{ background: "none", border: "none", color: "var(--cyan)", cursor: "pointer", fontSize: 13, fontWeight: 600, textAlign: "left", padding: 0, fontFamily: "var(--font-ui)" }}>
+                + Add Experience
+              </button>
             </div>
-          ))}
-          <button
-            type="button"
-            onClick={addEducation}
-            className="text-blue-600 font-medium hover:underline text-sm sm:text-base"
-          >
-            ➕ Add Education
-          </button>
-        </div>
+          </div>
 
-        {/* Experience Section */}
-        <div>
-          <h3 className="font-semibold mb-3 text-lg">💼 Experience</h3>
-          {(form.experience || []).map((exp, idx) => (
-            <div key={idx} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3 relative">
-              <input
-                type="text"
-                placeholder="Company"
-                value={exp.company}
-                onChange={(e) => updateExperienceField(idx, "company", e.target.value)}
-                className="border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-              />
-              <input
-                type="text"
-                placeholder="Role"
-                value={exp.role}
-                onChange={(e) => updateExperienceField(idx, "role", e.target.value)}
-                className="border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-              />
-              <input
-                type="text"
-                placeholder="Duration"
-                value={exp.duration}
-                onChange={(e) => updateExperienceField(idx, "duration", e.target.value)}
-                className="border border-gray-300 rounded-lg p-2 text-sm sm:text-base"
-              />
-              {idx > 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeExperience(idx)}
-                  className="absolute -right-4 sm:-right-6 top-2 text-red-500 hover:text-red-700"
-                >
-                  ❌
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addExperience}
-            className="text-blue-600 font-medium hover:underline text-sm sm:text-base"
-          >
-            ➕ Add Experience
-          </button>
+          {/* Submit */}
+          <div style={{ display: "flex", gap: 12 }}>
+            <button type="submit" disabled={loading} className="cn-btn cn-btn-primary" style={{ padding: "12px 32px" }}>
+              {loading ? <><Spinner size="sm" /> Saving…</> : "✓ Save Profile"}
+            </button>
+          </div>
         </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 sm:py-3 rounded-lg transition text-sm sm:text-base"
-        >
-          Update Profile
-        </button>
       </form>
     </div>
   );
