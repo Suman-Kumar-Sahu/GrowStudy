@@ -11,14 +11,17 @@ import {
   getRecruiterJobs,
 } from "../controllers/jobController.js";
 
+import { validateBody } from "../middleares/validationMiddleware.js";
+import { jobSchema } from "../validation/schemas.js";
+
 const router = express.Router();
 // Recruiter-specific routes
 
 router.get("/recruiter", protect, authorizeRoles("recruiter"), getRecruiterJobs);
 
-router.post("/", protect, authorizeRoles("recruiter"), createJob);
+router.post("/", protect, authorizeRoles("recruiter"), validateBody(jobSchema), createJob);
 
-router.put("/:id", protect, authorizeRoles("recruiter"), updateJob);
+router.put("/:id", protect, authorizeRoles("recruiter"), validateBody(jobSchema.partial()), updateJob);
 
 router.delete("/:id", protect, authorizeRoles("recruiter"), deleteJob);
 

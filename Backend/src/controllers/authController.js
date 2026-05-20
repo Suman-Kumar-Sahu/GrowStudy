@@ -8,10 +8,10 @@ export const generateToken = (userId, res) => {
   });
 
   res.cookie("token", token, {
-    httpOnly: true,         // prevent JS access
-    secure: false,          // set true if using https
-    sameSite: "lax",        // allow cookie in local dev
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   return token;
@@ -19,7 +19,7 @@ export const generateToken = (userId, res) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password ,role} = req.body;
+    const { name, email, password, role } = req.body;
 
     let avatarUrl = "";
     if (req.file) {
@@ -30,48 +30,57 @@ export const registerUser = async (req, res) => {
       avatarUrl = result.secure_url;
     }
 
-    const user = await User.create({ name, email, password, role,avatar: avatarUrl });
+    const user = await User.create({ name, email, password, role, avatar: avatarUrl });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    res.cookie("token", token, {
-      httpOnly: true, 
-      secure: false,    
-    });
+    generateToken(user._id, res);
 
     res.status(201).json({
       user,
-      message:"Registration SuccessFull"
+      message: "Registration Successful"
     });
   } catch (err) {
-    console.error(err);
+    console.error("Registration Error:", err);
     res.status(500).json({ message: "Registration failed" });
   }
 };
 
 export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user || !(await user.comparePassword(password)))
-    return res
-    .status(400)
-    .json({
-        message: "Invalid credentials" 
-    });
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-  generateToken(user._id, res);
-  res.json(user);
+    generateToken(user._id, res);
+    res.json(user);
+  } catch (err) {
+    console.error("Login Error:", err);
+    res.status(500).json({ message: "Login failed" });
+  }
 };
 
 export const logoutUser = async (req, res) => {
-  res.clearCookie("token","",{
-    httpOnly:true,
-    expires: new Date(0),
-  });
-  res.json({
-    message: "Logged out successfully"
- });
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+    res.json({
+      message: "Logged out successfully"
+    });
+  } catch (err) {
+    console.error("Logout Error:", err);
+    res.status(500).json({ message: "Logout failed" });
+  }
 };
 
-export const getMe = async(req,res)=>{
+export const getMe = async (req, res) => {
+  try {
     res.json(req.user);
-}
+  } catch (err) {
+    console.error("GetMe Error:", err);
+    res.status(500).json({ message: "Failed to fetch user session" });
+  }
+};

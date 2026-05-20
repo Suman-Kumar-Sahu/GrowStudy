@@ -24,6 +24,7 @@
     "multer": "^2.0.2",
     "nodemailer": "^7.0.12",
     "nodemon": "^3.1.11",
-    "pdfjs-dist": "^5.5.207"
+    "pdfjs-dist": "^5.5.207",
+    "zod": "^4.4.3"
   }
 }

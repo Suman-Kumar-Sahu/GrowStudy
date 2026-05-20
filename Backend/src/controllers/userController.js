@@ -4,13 +4,25 @@ import { v2 as cloudinary } from "cloudinary";
 
 // Get user profile
 export const getProfile = async (req, res) => {
-  const user = await User.findById(req.user.id);
-  res.json(user);
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    console.error("Error in getProfile:", error);
+    res.status(500).json({ message: "Failed to fetch profile" });
+  }
 };
 
 export const getProfileVisit = async (req, res) => {
-  const user = await User.findById( req.params.id);
-  res.json(user);
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    console.error("Error in getProfileVisit:", error);
+    res.status(500).json({ message: "Failed to fetch profile visit" });
+  }
 };
 
 // Update profile
@@ -18,7 +30,6 @@ export const updateProfile = async (req, res) => {
   try {
     const { name, skills, about, education, experience } = req.body;
 
-    // Parse JSON strings safely if sent from frontend as text
     let parsedEducation = [];
     let parsedExperience = [];
     try {
@@ -73,7 +84,6 @@ export const uploadResume = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // ✅ Upload new file to Cloudinary
     const result = await uploadOnCloudinary(req.file.path, "resumes");
     if (!result) {
       return res.status(500).json({ message: "Failed to upload to Cloudinary" });

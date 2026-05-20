@@ -22,9 +22,7 @@ export const getRecruiterApplications = async (req, res) => {
     const recruiterJobs = await Job.find({ recruiterId: req.user.id }).select("_id");
 
     if (!recruiterJobs.length) {
-      return res.status(404).json([],{
-        message:"No job Found"
-      }); 
+      return res.status(200).json([]); 
     }
 
     const jobIds = recruiterJobs.map(job => job._id);

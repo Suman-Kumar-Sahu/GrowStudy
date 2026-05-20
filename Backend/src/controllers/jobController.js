@@ -2,13 +2,23 @@ import Job from "../models/Job.models.js";
 import User from "../models/User.models.js";
 import Application from "../models/Application.models.js";
 
-// Recruiter: Create Job
 export const createJob = async (req, res) => {
   try {
-    const job = await Job.create({ ...req.body, recruiterId: req.user.id }); // use createdBy
+    const { title, company, description, skillsRequired, location, stipend, responsibilities, requirements } = req.body;
+    const job = await Job.create({
+      title,
+      company,
+      description,
+      skillsRequired,
+      location,
+      stipend,
+      responsibilities,
+      requirements,
+      recruiterId: req.user.id
+    });
     res.status(201).json(job);
   } catch (err) {
-    console.error(err);
+    console.error("Job Creation Error:", err);
     res.status(500).json({ message: "Failed to create job" });
   }
 };
@@ -55,11 +65,24 @@ export const updateJob = async (req, res) => {
     if (job.recruiterId.toString() !== req.user.id)
       return res.status(403).json({ message: "You are not authorized to update this job" });
 
-    Object.assign(job, req.body);
+    const { title, company, description, skillsRequired, location, stipend, status, responsibilities, requirements } = req.body;
+    
+    const updateFields = {};
+    if (title !== undefined) updateFields.title = title;
+    if (company !== undefined) updateFields.company = company;
+    if (description !== undefined) updateFields.description = description;
+    if (skillsRequired !== undefined) updateFields.skillsRequired = skillsRequired;
+    if (location !== undefined) updateFields.location = location;
+    if (stipend !== undefined) updateFields.stipend = stipend;
+    if (status !== undefined) updateFields.status = status;
+    if (responsibilities !== undefined) updateFields.responsibilities = responsibilities;
+    if (requirements !== undefined) updateFields.requirements = requirements;
+
+    Object.assign(job, updateFields);
     await job.save();
     res.json(job);
   } catch (err) {
-    console.error(err);
+    console.error("Job Update Error:", err);
     res.status(500).json({ message: "Failed to update job" });
   }
 };
@@ -82,7 +105,6 @@ export const deleteJob = async (req, res) => {
 };
 
 // Apply for job (student)
-
 export const applyJob = async (req, res) => {
   try {
     // Fetch student
@@ -95,7 +117,6 @@ export const applyJob = async (req, res) => {
     const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ message: "Job not found" });
 
-    // Check if already applied
     const existingApp = await Application.findOne({
       studentId: req.user._id,
       jobId: job._id,
@@ -108,11 +129,9 @@ export const applyJob = async (req, res) => {
     const application = await Application.create({
       studentId: req.user._id,
       jobId: job._id,
-      resumeUrl: student.resumeUrl, // store resume here
       status: "Pending",
     });
 
-    // Add student to job applicants array (optional)
     if (!job.applicants.includes(req.user._id)) {
       job.applicants.push(req.user._id);
       await job.save();
