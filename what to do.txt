@@ -1,0 +1,17 @@
+1. store resume url in User model
+
+// improve query
+1. .populate() is one of the slowest operations in Mongoose because each populate is an extra query.
+2. .populate() is expensive
+
+Multiple queries per request
+
+No caching
+
+Single Node process
+
+Local MongoDB
+
+No indexes shown
+
+2. using Debouncing in search 
