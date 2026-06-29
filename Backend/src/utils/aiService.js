@@ -2,20 +2,20 @@ import Groq from "groq-sdk";
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ─── Helper: Safe JSON parse (strips markdown fences if any) ───────────────
+//Helper: Safe JSON parse 
 const safeParseJSON = (text) => {
   const cleaned = text.trim().replace(/```json|```/g, "").trim();
   return JSON.parse(cleaned);
 };
 
-// ─── 1. Analyze Resume ─────────────────────────────────────────────────────
+// Analyze Resume 
 export const analyzeResume = async (resumeText) => {
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     max_tokens: 1500,
     messages: [
       {
-        role: "system",                                         // ← ADD THIS
+        role: "system",
         content: "You are an expert HR consultant. You always respond with valid JSON only. No markdown, no explanation, no extra text. All numeric scores are integers from 0 to 100."
       },
       {
@@ -51,12 +51,12 @@ ${resumeText}`,
   const raw = response.choices[0]?.message?.content || "";
   return safeParseJSON(raw);
 };
-// ─── 2. Recommend Jobs ─────────────────────────────────────────────────────
+// Recommend Jobs 
 export const recommendJobs = async (candidateProfile, jobsList) => {
   const jobsSummary = jobsList.map((job) => ({
     id: job._id,
     title: job.title,
-    skills: job.skillsRequired || [],      
+    skills: job.skillsRequired || [],
     experience: job.experienceRequired || "",
     location: job.location || "",
     description: (job.description || "").slice(0, 300),
@@ -90,7 +90,7 @@ export const recommendJobs = async (candidateProfile, jobsList) => {
   return safeParseJSON(raw);
 };
 
-// ─── 3. Calculate Match Score ──────────────────────────────────────────────
+//Calculate Match Score
 export const calculateMatchScore = async (candidateProfile, job) => {
   const response = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",

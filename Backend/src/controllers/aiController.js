@@ -5,7 +5,7 @@ import Application from "../models/Application.models.js";
 import axios from "axios";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
-// ─── Helper: Extract text from resume URL ──────────────────────────────────
+// Extract text from resume URL
 const extractTextFromResumeUrl = async (resumeUrl) => {
   try {
     if (!resumeUrl || typeof resumeUrl !== "string") {
@@ -52,7 +52,7 @@ const extractTextFromResumeUrl = async (resumeUrl) => {
   }
 };
 
-// ─── Helper: Build candidate profile ───────────────────────────────────────
+// Build candidate profile 
 const buildCandidateProfile = (user, resumeAnalysis) => ({
   name: user.name || "Unknown",
   email: user.email || "",
@@ -64,7 +64,7 @@ const buildCandidateProfile = (user, resumeAnalysis) => ({
   location: user.location || "",
 });
 
-// ─── Helper: Retry logic for AI API calls ──────────────────────────────────
+//  Retry logic for AI API calls
 const retryAICall = async (callbackFn, maxRetries = 3) => {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -76,11 +76,11 @@ const retryAICall = async (callbackFn, maxRetries = 3) => {
   }
 };
 
-// ─── Helper: Get resume URL from user ──────────────────────────────────────
+// Get resume URL from user
 const getResumeUrl = (user) =>
   user.resume || user.resumeUrl || user.profile?.resume || null;
 
-// ─── 1. Analyze Resume ─────────────────────────────────────────────────────
+// Analyze Resume 
 export const analyzeResumeController = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
@@ -127,7 +127,7 @@ export const analyzeResumeController = async (req, res) => {
   }
 };
 
-// ─── 2. Job Recommendations ────────────────────────────────────────────────
+// Job Recommendations 
 export const getJobRecommendations = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
@@ -150,7 +150,7 @@ export const getJobRecommendations = async (req, res) => {
 
     // const jobs = await Job.find({ status: "active" }).limit(50).lean();
     const jobs = await Job.find({}).limit(50).lean();
-    console.log("Total jobs found:", jobs.length); 
+    console.log("Total jobs found:", jobs.length);
     if (!jobs.length) {
       return res.status(404).json({
         success: false,
@@ -192,7 +192,7 @@ export const getJobRecommendations = async (req, res) => {
   }
 };
 
-// ─── 3. Match Score (Candidate vs Specific Job) ────────────────────────────
+// Match Score (Candidate vs Specific Job) 
 export const getMatchScore = async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -251,7 +251,7 @@ export const getMatchScore = async (req, res) => {
   }
 };
 
-// ─── 4. Batch Match Scores ─────────────────────────────────────────────────
+//Batch Match Scores 
 export const getBatchMatchScores = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;

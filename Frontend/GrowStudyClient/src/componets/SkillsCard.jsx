@@ -5,7 +5,7 @@ import { Spinner } from "./ui/Loader";
 
 export default function SkillsCard({ form, setForm, handleUpdate, loading, setUser }) {
   const toast = useToast();
-  const [avatarFile,    setAvatarFile]    = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
 
@@ -26,7 +26,7 @@ export default function SkillsCard({ form, setForm, handleUpdate, loading, setUs
       const res = await api.post("/users/upload-avatar", fd, {
         headers: { "Content-Type": "multipart/form-data" }
       });
-      const newAvatar = (res.data.avatar || res.data.avatarUrl) + `?t=${Date.now()}`;
+      const newAvatar = (res.data.user?.avatar || res.data.avatar || res.data.avatarUrl) + `?t=${Date.now()}`;
       if (typeof setUser === "function") setUser(prev => ({ ...prev, avatar: newAvatar }));
       setForm(prev => ({ ...prev, avatar: newAvatar }));
       toast.success("Avatar updated!", "Your profile picture has been changed.");
@@ -38,14 +38,14 @@ export default function SkillsCard({ form, setForm, handleUpdate, loading, setUs
   };
 
   /* ─── Education ─── */
-  const addEdu    = () => setForm(f => ({ ...f, education: [...f.education, { college: "", degree: "", year: "" }] }));
+  const addEdu = () => setForm(f => ({ ...f, education: [...f.education, { college: "", degree: "", year: "" }] }));
   const removeEdu = (i) => setForm(f => ({ ...f, education: f.education.filter((_, idx) => idx !== i) }));
   const updateEdu = (i, field, val) => setForm(f => {
     const ed = [...f.education]; ed[i] = { ...ed[i], [field]: val }; return { ...f, education: ed };
   });
 
   /* ─── Experience ─── */
-  const addExp    = () => setForm(f => ({ ...f, experience: [...f.experience, { company: "", role: "", duration: "" }] }));
+  const addExp = () => setForm(f => ({ ...f, experience: [...f.experience, { company: "", role: "", duration: "" }] }));
   const removeExp = (i) => setForm(f => ({ ...f, experience: f.experience.filter((_, idx) => idx !== i) }));
   const updateExp = (i, field, val) => setForm(f => {
     const ex = [...f.experience]; ex[i] = { ...ex[i], [field]: val }; return { ...f, experience: ex };
@@ -81,8 +81,8 @@ export default function SkillsCard({ form, setForm, handleUpdate, loading, setUs
                 {avatarPreview || form.avatar
                   ? <img src={avatarPreview || form.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, var(--cyan), #6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 22, color: "var(--bg-base)" }}>
-                      {(form.name?.[0] || "U").toUpperCase()}
-                    </div>
+                    {(form.name?.[0] || "U").toUpperCase()}
+                  </div>
                 }
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
