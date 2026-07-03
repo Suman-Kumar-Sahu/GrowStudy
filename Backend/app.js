@@ -9,18 +9,11 @@ import messageRoutes from "./src/routes/messageRoutes.js"
 import aiRoutes from "./src/routes/aiRoutes.js";
 
 import rateLimit from "express-rate-limit";
+import { tokenBucket } from "./src/middleares/TBRateLimiter.js"
 
 const app = express();
 
 app.set("trust proxy", 1);
-
-const generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 150,
-    message: { message: "Too many requests from this IP, please try again later." },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
 
 const authLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
@@ -46,10 +39,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 
-app.use("/api/users", generalLimiter, userRoutes);
-app.use("/api/jobs", generalLimiter, jobRoutes);
-app.use("/api/applications", generalLimiter, applicationRoutes);
-app.use("/api/notify", generalLimiter, messageRoutes);
+app.use("/api/users", tokenBucket, userRoutes);
+app.use("/api/jobs", tokenBucket, jobRoutes);
+app.use("/api/applications", tokenBucket, applicationRoutes);
+app.use("/api/notify", tokenBucket, messageRoutes);
 
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/ai", aiLimiter, aiRoutes);
