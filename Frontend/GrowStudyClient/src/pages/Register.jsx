@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/Axios";
+import { compressImage } from "../helper/compressedImage"
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { Spinner } from "../componets/ui/Loader";
@@ -32,11 +33,20 @@ export default function Register() {
     setPwStrength(getStrength(val));
   };
 
-  const handleAvatar = (e) => {
+  const handleAvatar = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+
+    try {
+      const compressed = await compressImage(file, 400, 400, 0.8);
+      setAvatarFile(compressed);
+      setAvatarPreview(URL.createObjectURL(compressed));
+    } catch (error) {
+      toast.error("Error", "Please select a valid image file");
+      e.target.value = "";
+      return;
+    }
+
   };
 
   const handleSubmit = async (e) => {

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import api from "../api/Axios";
 import { useToast } from "../context/ToastContext";
 import { Spinner } from "./ui/Loader";
+import { compressImage } from "../helper/compressedImage";
 
 export default function SkillsCard({ form, setForm, handleUpdate, loading, setUser }) {
   const toast = useToast();
@@ -10,11 +11,31 @@ export default function SkillsCard({ form, setForm, handleUpdate, loading, setUs
   const [avatarLoading, setAvatarLoading] = useState(false);
 
   /* ─── Avatar ─── */
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+
+    try {
+      const MAX_SIZE = 2 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        const compressed = await compressImage(file, 400, 400, 0.8);
+      }
+
+      const fileType = file.type.split('/')[1];
+      if (!["jpeg", "png", "jpg"].includes(fileType)) {
+        toast.error("Invalid file type", "Please select a valid image file");
+        e.target.value = "";
+        return;
+      }
+
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    } catch (error) {
+      toast.error("Error", "Please select a valid image file");
+      e.target.value = "";
+      return;
+    }
+
   };
 
   const handleAvatarUpload = async () => {

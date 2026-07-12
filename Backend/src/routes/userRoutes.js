@@ -1,8 +1,8 @@
 import express from "express";
-import { getProfile, updateProfile, uploadResume,uploadAvatar , getProfileVisit} from "../controllers/userController.js";
-import {protect} from "../middleares/authMiddleware.js"
+import { getProfile, updateProfile, uploadResume, uploadAvatar, getProfileVisit } from "../controllers/userController.js";
+import { protect } from "../middleares/authMiddleware.js"
 
-import { uploadAvatars, uploadResumes} from "../middleares/multerMiddleware.js"
+import { uploadAvatars, uploadResumes } from "../middleares/multerMiddleware.js"
 
 const router = express.Router();
 
