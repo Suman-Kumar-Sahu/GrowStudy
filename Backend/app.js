@@ -31,8 +31,26 @@ const aiLimiter = rateLimit({
     legacyHeaders: false,
 });
 
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://localhost:5174",
+].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+
+        const isAllowed = allowedOrigins.includes(origin) ||
+                          (origin.startsWith("https://growstudyclient") && origin.endsWith(".vercel.app"));
+
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS policy blocked access from origin: ${origin}`));
+        }
+    },
     credentials: true
 }))
 app.use(express.json());
